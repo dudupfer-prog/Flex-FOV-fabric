@@ -43,7 +43,7 @@ public abstract class GameRendererMixin {
 		Projection.getProjection().renderWorld(tickDelta, startTime, tick);
 	}
 	
-	@Inject(method = "render(FJZ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;isIntegratedServerRunning()Z", ordinal = 0))
+	@Inject(method = "render(FJZ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/GameRenderer;renderWorld(FJLnet/minecraft/client/util/math/MatrixStack;)V", ordinal = 0, shift = At.Shift.AFTER))
 	private void renderPost(float tickDelta, long startTime, boolean tick, CallbackInfo callbackInfo) {
 		renderingPanorama = renderingPanoramaTemp;
 		if (client != null && client.options != null) {
