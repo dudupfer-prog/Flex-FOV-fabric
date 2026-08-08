@@ -4,8 +4,8 @@ import net.id107.flexfov.ConfigManager;
 import net.id107.flexfov.projection.Cylinder;
 import net.id107.flexfov.projection.Projection;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.options.DoubleOption;
-import net.minecraft.text.LiteralText;
+import net.minecraft.client.gui.widget.SliderWidget;
+import net.minecraft.text.Text;
 
 public class CylinderGui extends AdvancedGui {
 
@@ -18,16 +18,34 @@ public class CylinderGui extends AdvancedGui {
 	protected void init() {
 		super.init();
 		
-		DoubleOption FOVX = new DoubleOption("cylinderFovX", 0, 360, 1,
-				(gameOptions) -> {return Projection.getProjection().getFovX();},
-				(gameOptions, number) -> {Projection.fov = number; ConfigManager.saveConfig();},
-				(gameOptions, doubleOption) -> {return new LiteralText("Horizontal FOV: " + Math.round(Projection.getProjection().getFovX()));});
-		addButton(FOVX.createButton(client.options, width / 2 - 180, height / 6 + 60, 360));
+		addDrawableChild(new SliderWidget(width / 2 - 180, height / 6 + 60, 360, 20,
+				Text.literal("Horizontal FOV: " + Math.round(Projection.getProjection().getFovX())),
+				Projection.getProjection().getFovX() / 360.0) {
+			@Override
+			protected void updateMessage() {
+				this.setMessage(Text.literal("Horizontal FOV: " + Math.round(this.value * 360.0)));
+			}
+
+			@Override
+			protected void applyValue() {
+				Projection.fov = this.value * 360.0;
+				ConfigManager.saveConfig();
+			}
+		});
 		
-		DoubleOption FOVY = new DoubleOption("cylinderFovY", 0, 180, 1,
-				(gameOptions) -> {return Projection.getProjection().getFovY();},
-				(gameOptions, number) -> {Cylinder.fovy = number; ConfigManager.saveConfig();},
-				(gameOptions, doubleOption) -> {return new LiteralText("Vertical FOV: " + Math.round(Projection.getProjection().getFovY()));});
-		addButton(FOVY.createButton(client.options, width / 2 - 180, height / 6 + 84, 180));
+		addDrawableChild(new SliderWidget(width / 2 - 180, height / 6 + 84, 180, 20,
+				Text.literal("Vertical FOV: " + Math.round(Projection.getProjection().getFovY())),
+				Projection.getProjection().getFovY() / 180.0) {
+			@Override
+			protected void updateMessage() {
+				this.setMessage(Text.literal("Vertical FOV: " + Math.round(this.value * 180.0)));
+			}
+
+			@Override
+			protected void applyValue() {
+				Cylinder.fovy = this.value * 180.0;
+				ConfigManager.saveConfig();
+			}
+		});
 	}
 }
