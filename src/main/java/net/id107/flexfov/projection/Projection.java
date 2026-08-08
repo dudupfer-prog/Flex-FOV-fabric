@@ -13,6 +13,11 @@ import net.id107.flexfov.ShaderManager;
 import net.id107.flexfov.gui.SettingsGui;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Matrix4f;
@@ -87,21 +92,21 @@ public abstract class Projection {
 		
 		if (Math.max(getFovX(), getFovY()) > 90 || zoom < 0) {
 			for (renderPass = 1; renderPass < 5; renderPass++) {
-				GL11.glViewport(0, 0, displayWidth, displayHeight);
+				RenderSystem.viewport(0, 0, displayWidth, displayHeight);
 				mc.worldRenderer.scheduleTerrainUpdate();
 				mc.gameRenderer.renderWorld(tickDelta, startTime, new MatrixStack());
 				saveRenderPass();
 			}
 			if (Math.max(getFovX(), getFovY()) > 250 || zoom < 0) {
 				renderPass = 5;
-				GL11.glViewport(0, 0, displayWidth, displayHeight);
+				RenderSystem.viewport(0, 0, displayWidth, displayHeight);
 				mc.worldRenderer.scheduleTerrainUpdate();
 				mc.gameRenderer.renderWorld(tickDelta, startTime, new MatrixStack());
 				saveRenderPass();
 			}
 		}
 		renderPass = 0;
-		GL11.glViewport(0, 0, displayWidth, displayHeight);
+		RenderSystem.viewport(0, 0, displayWidth, displayHeight);
 		mc.worldRenderer.scheduleTerrainUpdate();
 		
 		mc.options.hudHidden = hudHidden;
@@ -138,13 +143,6 @@ public abstract class Projection {
 	public void saveRenderPass() {
 		if (getResizeGui() && renderPass == 0) {
 			MinecraftClient mc = MinecraftClient.getInstance();
-			Window window = mc.getWindow();
-			GL11.glMatrixMode(5889);
-			GL11.glLoadIdentity();
-			GL11.glOrtho(0.0D, (double)window.getFramebufferWidth() / window.getScaleFactor(), (double)window.getFramebufferHeight() / window.getScaleFactor(), 0.0D, 1000.0D, 3000.0D);
-			GL11.glMatrixMode(5888);
-			GL11.glLoadIdentity();
-			GL11.glTranslatef(0.0F, 0.0F, -2000.0F);
 			RenderSystem.clear(256, MinecraftClient.IS_SYSTEM_MAC);
 			MatrixStack matrixStack = new MatrixStack();
 			mc.inGameHud.render(matrixStack, tickDelta);
@@ -160,38 +158,22 @@ public abstract class Projection {
 		Framebuffer targetFramebuffer = BufferManager.getFramebuffer();
 		
 		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, targetFramebuffer.fbo);
-		GL11.glViewport(0, 0, targetFramebuffer.textureWidth, targetFramebuffer.textureHeight);
+		RenderSystem.viewport(0, 0, targetFramebuffer.textureWidth, targetFramebuffer.textureHeight);
 		GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0,
 				GL11.GL_TEXTURE_2D, BufferManager.framebufferTextures[renderPass], 0);
 		
-		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
-		GL11.glMatrixMode(GL11.GL_PROJECTION);
-		GL11.glPushMatrix();
-		GL11.glLoadIdentity();
-		GL11.glOrtho(-1, 1, -1, 1, -1, 1);
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		GL11.glPushMatrix();
-		GL11.glLoadIdentity();
+		RenderSystem.clear(GL11.GL_COLOR_BUFFER_BIT, MinecraftClient.IS_SYSTEM_MAC);
 		
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, defaultFramebuffer.getColorAttachment());
-		GL11.glBegin(GL11.GL_QUADS);
-		{
-			GL11.glTexCoord2f(BufferManager.getMinX(), BufferManager.getMinY());
-			GL11.glVertex2f(-1, -1);
-			GL11.glTexCoord2f(BufferManager.getMaxX(), BufferManager.getMinY());
-			GL11.glVertex2f(1, -1);
-			GL11.glTexCoord2f(BufferManager.getMaxX(), BufferManager.getMaxY());
-			GL11.glVertex2f(1, 1);
-			GL11.glTexCoord2f(BufferManager.getMinX(), BufferManager.getMaxY());
-			GL11.glVertex2f(-1, 1);
-		}
-		GL11.glEnd();
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-		
-		GL11.glMatrixMode(GL11.GL_PROJECTION);
-		GL11.glPopMatrix();
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		GL11.glPopMatrix();
+		RenderSystem.setShader(GameRenderer::getPositionTexShader);
+		RenderSystem.setShaderTexture(0, defaultFramebuffer.getColorAttachment());
+		Tessellator tessellator = Tessellator.getInstance();
+		BufferBuilder bufferBuilder = tessellator.getBuffer();
+		bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+		bufferBuilder.vertex(-1, -1, 0).texture(BufferManager.getMinX(), BufferManager.getMinY()).next();
+		bufferBuilder.vertex(1, -1, 0).texture(BufferManager.getMaxX(), BufferManager.getMinY()).next();
+		bufferBuilder.vertex(1, 1, 0).texture(BufferManager.getMaxX(), BufferManager.getMaxY()).next();
+		bufferBuilder.vertex(-1, 1, 0).texture(BufferManager.getMinX(), BufferManager.getMaxY()).next();
+		tessellator.draw();
 		
 		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, defaultFramebuffer.fbo);
 	}
@@ -277,41 +259,28 @@ public abstract class Projection {
 		GL13.glActiveTexture(GL13.GL_TEXTURE2);
 		int lightmap = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 		
-		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-		GL11.glMatrixMode(GL11.GL_PROJECTION);
-		GL11.glPushMatrix();
-		GL11.glLoadIdentity();
-		GL11.glOrtho(-1, 1, -1, 1, -1, 1);
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		GL11.glPushMatrix();
-		GL11.glLoadIdentity();
+		RenderSystem.clear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT, MinecraftClient.IS_SYSTEM_MAC);
 		
 		for (int i = 0; i < BufferManager.framebufferTextures.length; i++) {
 			GL13.glActiveTexture(GL13.GL_TEXTURE0+i);
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, BufferManager.framebufferTextures[i]);
 		}
-		GL11.glViewport(0, 0, displayWidth, displayHeight);
-		GL11.glBegin(GL11.GL_QUADS);
-		{
-			GL11.glTexCoord2f(0, 0);
-			GL11.glVertex2f(-1, -1);
-			GL11.glTexCoord2f(1, 0);
-			GL11.glVertex2f(1, -1);
-			GL11.glTexCoord2f(1, 1);
-			GL11.glVertex2f(1, 1);
-			GL11.glTexCoord2f(0, 1);
-			GL11.glVertex2f(-1, 1);
-		}
-		GL11.glEnd();
+		RenderSystem.viewport(0, 0, displayWidth, displayHeight);
+		
+		RenderSystem.setShader(GameRenderer::getPositionTexShader);
+		Tessellator tessellator = Tessellator.getInstance();
+		BufferBuilder bufferBuilder = tessellator.getBuffer();
+		bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+		bufferBuilder.vertex(-1, -1, 0).texture(0, 0).next();
+		bufferBuilder.vertex(1, -1, 0).texture(1, 0).next();
+		bufferBuilder.vertex(1, 1, 0).texture(1, 1).next();
+		bufferBuilder.vertex(-1, 1, 0).texture(0, 1).next();
+		tessellator.draw();
+		
 		for (int i = BufferManager.framebufferTextures.length-1; i >= 0; i--) {
 			GL13.glActiveTexture(GL13.GL_TEXTURE0+i);
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		}
-		
-		GL11.glMatrixMode(GL11.GL_PROJECTION);
-		GL11.glPopMatrix();
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		GL11.glPopMatrix();
 		
 		GL13.glActiveTexture(GL13.GL_TEXTURE2);
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, lightmap);
