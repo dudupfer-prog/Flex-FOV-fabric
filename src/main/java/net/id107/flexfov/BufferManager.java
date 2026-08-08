@@ -6,6 +6,7 @@ import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.SimpleFramebuffer;
 import net.minecraft.client.util.Window;
 
 public class BufferManager {
@@ -36,7 +37,7 @@ public class BufferManager {
 		
 		Window window = MinecraftClient.getInstance().getWindow();
 		int width = Math.min(window.getWidth(), window.getHeight());
-		framebuffer = new Framebuffer(width, width, false, false);
+		framebuffer = new SimpleFramebuffer(width, width, false, MinecraftClient.IS_SYSTEM_MAC);
 		
 		for (int i = 0; i < framebufferTextures.length; i++) {
 			framebufferTextures[i] = GL11.glGenTextures();
