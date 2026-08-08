@@ -7,7 +7,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 
 public abstract class SettingsGui extends Screen {
 
@@ -16,7 +16,7 @@ public abstract class SettingsGui extends Screen {
 	public static int currentGui = 1;
 	
 	public SettingsGui(Screen parent) {
-		super(new LiteralText("Flex FOV Settings"));
+		super(Text.literal("Flex FOV Settings"));
 		parentScreen = parent;
 		ConfigManager.saveConfig();
 	}
@@ -36,37 +36,37 @@ public abstract class SettingsGui extends Screen {
 	@Override
 	protected void init() {
 		ButtonWidget button = new ButtonWidget(width / 2 - 190, height / 6 - 12, 120, 20,
-				new LiteralText("Default"), (buttonWidget) -> {
+				Text.literal("Default"), (buttonWidget) -> {
 					currentGui = 0;
-					client.openScreen(new RectilinearGui(parentScreen));
+					if (client != null) client.setScreen(new RectilinearGui(parentScreen));
 		});
 		if (this instanceof RectilinearGui) {
 			button.active = false;
 		}
-		addButton(button);
+		addDrawableChild(button);
 		
 		button = new ButtonWidget(width / 2 - 60, height / 6 - 12, 120, 20,
-				new LiteralText("Flex"), (buttonWidget) -> {
+				Text.literal("Flex"), (buttonWidget) -> {
 					currentGui = 1;
-					client.openScreen(new FlexGui(parentScreen));
+					if (client != null) client.setScreen(new FlexGui(parentScreen));
 				});
 		if (this instanceof FlexGui) {
 			button.active = false;
 		}
-		addButton(button);
+		addDrawableChild(button);
 		
 		button = new ButtonWidget(width / 2 + 70, height / 6 - 12, 120, 20,
-				new LiteralText("Advanced"), (buttonWidget) -> {
+				Text.literal("Advanced"), (buttonWidget) -> {
 					currentGui = 2;
-					client.openScreen(AdvancedGui.getGui(parentScreen));
+					if (client != null) client.setScreen(AdvancedGui.getGui(parentScreen));
 				});
 		if (this instanceof AdvancedGui) {
 			button.active = false;
 		}
-		addButton(button);
+		addDrawableChild(button);
 		
-		addButton(new ButtonWidget(this.width / 2 - 100, this.height / 6 + 168, 200, 20, ScreenTexts.DONE, (buttonWidget) -> {
-			client.openScreen(parentScreen);
+		addDrawableChild(new ButtonWidget(this.width / 2 - 100, this.height / 6 + 168, 200, 20, ScreenTexts.DONE, (buttonWidget) -> {
+			if (client != null) client.setScreen(parentScreen);
 		}));
 	}
 	
