@@ -3,9 +3,8 @@ package net.id107.flexfov.projection;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 
-import com.mojang.blaze3d.platform.FramebufferInfo;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.id107.flexfov.BufferManager;
@@ -115,23 +114,23 @@ public abstract class Projection {
 			break;
 		case 1:
 			matrix = new Matrix4f(new Quaternion(0, 0.707106781f, 0, 0.707106781f)); //look right
-			matrixStack.peek().getModel().multiply(matrix);
+			matrixStack.peek().getPositionMatrix().multiply(matrix);
 			break;
 		case 2:
 			matrix = new Matrix4f(new Quaternion(0, -0.707106781f, 0, 0.707106781f)); //look left
-			matrixStack.peek().getModel().multiply(matrix);
+			matrixStack.peek().getPositionMatrix().multiply(matrix);
 			break;
 		case 3:
 			matrix = new Matrix4f(new Quaternion(0.707106781f, 0, 0, 0.707106781f)); //look down
-			matrixStack.peek().getModel().multiply(matrix);
+			matrixStack.peek().getPositionMatrix().multiply(matrix);
 			break;
 		case 4:
 			matrix = new Matrix4f(new Quaternion(-0.707106781f, 0, 0, 0.707106781f)); //look up
-			matrixStack.peek().getModel().multiply(matrix);
+			matrixStack.peek().getPositionMatrix().multiply(matrix);
 			break;
 		case 5:
 			matrix = new Matrix4f(new Quaternion(0, -1, 0, 0)); //look back
-			matrixStack.peek().getModel().multiply(matrix);
+			matrixStack.peek().getPositionMatrix().multiply(matrix);
 			break;
 		}
 	}
@@ -161,9 +160,9 @@ public abstract class Projection {
 		Framebuffer defaultFramebuffer = MinecraftClient.getInstance().getFramebuffer();
 		Framebuffer targetFramebuffer = BufferManager.getFramebuffer();
 		
-		GlStateManager.bindFramebuffer(FramebufferInfo.FRAME_BUFFER, targetFramebuffer.fbo);
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, targetFramebuffer.fbo);
 		GL11.glViewport(0, 0, targetFramebuffer.textureWidth, targetFramebuffer.textureHeight);
-		GlStateManager.framebufferTexture2D(FramebufferInfo.FRAME_BUFFER, FramebufferInfo.COLOR_ATTACHMENT,
+		GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0,
 				GL11.GL_TEXTURE_2D, BufferManager.framebufferTextures[renderPass], 0);
 		
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
@@ -195,7 +194,7 @@ public abstract class Projection {
 		GL11.glMatrixMode(GL11.GL_MODELVIEW);
 		GL11.glPopMatrix();
 		
-		GlStateManager.bindFramebuffer(FramebufferInfo.FRAME_BUFFER, defaultFramebuffer.fbo);
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, defaultFramebuffer.fbo);
 	}
 	
 	public void loadUniforms(float tickDelta) {
