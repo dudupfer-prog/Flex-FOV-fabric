@@ -36,15 +36,19 @@ public abstract class GameRendererMixin {
 	private void renderPre(float tickDelta, long startTime, boolean tick, CallbackInfo callbackInfo) {
 		renderingPanoramaTemp = renderingPanorama;
 		renderingPanorama = Projection.getProjection().shouldOverrideFOV();
-		fovTemp = client.options.fov;
-		client.options.fov = Projection.getProjection().getPassFOV(fovTemp);
+		if (client != null && client.options != null) {
+			fovTemp = client.options.getFov().getValue();
+			client.options.getFov().setValue((int) Projection.getProjection().getPassFOV(fovTemp));
+		}
 		Projection.getProjection().renderWorld(tickDelta, startTime, tick);
 	}
 	
 	@Inject(method = "render(FJZ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;isIntegratedServerRunning()Z", ordinal = 0))
 	private void renderPost(float tickDelta, long startTime, boolean tick, CallbackInfo callbackInfo) {
 		renderingPanorama = renderingPanoramaTemp;
-		client.options.fov = fovTemp;
+		if (client != null && client.options != null) {
+			client.options.getFov().setValue((int) fovTemp);
+		}
 		Projection.getProjection().saveRenderPass();
 		Projection.getProjection().loadUniforms(tickDelta);
 		Projection.getProjection().runShader(tickDelta);
