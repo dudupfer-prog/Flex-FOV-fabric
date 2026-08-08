@@ -4,8 +4,8 @@ import net.id107.flexfov.ConfigManager;
 import net.id107.flexfov.projection.Panini;
 import net.id107.flexfov.projection.Projection;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.options.DoubleOption;
-import net.minecraft.text.LiteralText;
+import net.minecraft.client.gui.widget.SliderWidget;
+import net.minecraft.text.Text;
 
 public class PaniniGui extends AdvancedGui {
 	
@@ -18,10 +18,19 @@ public class PaniniGui extends AdvancedGui {
 	protected void init() {
 		super.init();
 		
-		DoubleOption FOV = new DoubleOption("paniniFov", 0, 360, 1,
-				(gameOptions) -> {return Projection.getProjection().getFovX();},
-				(gameOptions, number) -> {Projection.fov = number; ConfigManager.saveConfig();},
-				(gameOptions, doubleOption) -> {return new LiteralText("FOV: " + (int)Projection.getProjection().getFovX());});
-		addButton(FOV.createButton(client.options, width / 2 - 180, height / 6 + 60, 360));
+		addDrawableChild(new SliderWidget(width / 2 - 180, height / 6 + 60, 360, 20,
+				Text.literal("FOV: " + (int)Projection.getProjection().getFovX()),
+				Projection.getProjection().getFovX() / 360.0) {
+			@Override
+			protected void updateMessage() {
+				this.setMessage(Text.literal("FOV: " + (int)(this.value * 360.0)));
+			}
+
+			@Override
+			protected void applyValue() {
+				Projection.fov = this.value * 360.0;
+				ConfigManager.saveConfig();
+			}
+		});
 	}
 }
