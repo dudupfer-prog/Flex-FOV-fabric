@@ -15,9 +15,19 @@ public class ShaderManager {
 	public void createShaderProgram(Projection projection) {
 		if (shaderProgram != 0) return;
 		
+		String vSource = projection.getVertexShader();
+		String fSource = projection.getFragmentShader();
+		
+		if (vSource == null || vSource.isEmpty()) {
+			System.err.println("[FlexFOV] Vertex shader source is empty!");
+		}
+		if (fSource == null || fSource.isEmpty()) {
+			System.err.println("[FlexFOV] Fragment shader source is empty!");
+		}
+		
 		shaderProgram = GL20.glCreateProgram();
-		vertexShader = createShader(projection.getVertexShader(), GL20.GL_VERTEX_SHADER);
-		fragmentShader = createShader(projection.getFragmentShader(), GL20.GL_FRAGMENT_SHADER);
+		vertexShader = createShader(vSource, GL20.GL_VERTEX_SHADER);
+		fragmentShader = createShader(fSource, GL20.GL_FRAGMENT_SHADER);
 		
 		GL20.glAttachShader(shaderProgram, vertexShader);
 		GL20.glAttachShader(shaderProgram, fragmentShader);
@@ -26,24 +36,26 @@ public class ShaderManager {
 		GL20.glLinkProgram(shaderProgram);
 		
 		if (GL20.glGetProgrami(shaderProgram, GL20.GL_LINK_STATUS) == GL11.GL_FALSE) {
-			throw new RuntimeException(getLogInfo(shaderProgram));
+			System.err.println("[FlexFOV] Shader Link Error: " + getLogInfo(shaderProgram));
+			return;
 		}
 		GL20.glValidateProgram(shaderProgram);
 		if (GL20.glGetProgrami(shaderProgram, GL20.GL_VALIDATE_STATUS) == GL11.GL_FALSE) {
-			throw new RuntimeException(getLogInfo(shaderProgram));
+			System.err.println("[FlexFOV] Shader Validate Warning: " + getLogInfo(shaderProgram));
 		}
 	}
 	
 	private int createShader(String source, int type) {
 		int shader = GL20.glCreateShader(type);
 		if (shader == 0) {
-			throw new RuntimeException("Could not create shader");
+			System.err.println("[FlexFOV] Could not create shader object");
+			return 0;
 		}
-		GL20.glShaderSource(shader, source);
+		GL20.glShaderSource(shader, source != null ? source : "");
 		GL20.glCompileShader(shader);
 		
 		if (GL20.glGetShaderi(shader, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
-			throw new RuntimeException("Error creating shader: " + getLogInfo(shader));
+			System.err.println("[FlexFOV] Shader Compile Error (" + type + "): " + getLogInfo(shader));
 		}
 		
 		return shader;
