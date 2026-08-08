@@ -2,6 +2,7 @@ package net.id107.flexfov;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.resource.Resource;
@@ -12,34 +13,29 @@ public class Reader {
 
 	public static String read(String resourceIn) {
 		ResourceManager resourceManager = MinecraftClient.getInstance().getResourceManager();
-		Resource resource = null;
-		try {
-			resource = resourceManager.getResource(new Identifier(resourceIn));
-		} catch (IOException e) {
-			e.printStackTrace();
+		Optional<Resource> optionalResource = resourceManager.getResource(new Identifier(resourceIn));
+		if (optionalResource.isEmpty()) {
+			System.out.println("Shader not found: " + resourceIn);
 			return "";
 		}
 		
-		InputStream is = resource.getInputStream();
-		if (is == null) {
-			System.out.println("Shader not found");
-			return "";
-		}
-		
-		StringBuilder sb = new StringBuilder();
-		int i;
-		
-		try {
-			i = is.read();
+		Resource resource = optionalResource.get();
+		try (InputStream is = resource.getInputStream()) {
+			if (is == null) {
+				System.out.println("Shader input stream is null");
+				return "";
+			}
+			
+			StringBuilder sb = new StringBuilder();
+			int i = is.read();
 			while (i != -1) {
 				sb.append((char) i);
 				i = is.read();
 			}
+			return sb.toString();
 		} catch (IOException e) {
 			e.printStackTrace();
 			return "";
 		}
-		
-		return sb.toString();
 	}
 }
