@@ -4,7 +4,6 @@ import net.id107.flexfov.ConfigManager;
 import net.id107.flexfov.gui.advanced.AdvancedGui;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
@@ -65,7 +64,7 @@ public abstract class SettingsGui extends Screen {
 		}
 		addDrawableChild(button);
 		
-		addDrawableChild(new ButtonWidget(this.width / 2 - 100, this.height / 6 + 168, 200, 20, ScreenTexts.DONE, (buttonWidget) -> {
+		addDrawableChild(new ButtonWidget(this.width / 2 - 100, this.height / 6 + 168, 200, 20, Text.translatable("gui.done"), (buttonWidget) -> {
 			if (client != null) client.setScreen(parentScreen);
 		}));
 	}
