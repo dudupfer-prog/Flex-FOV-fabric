@@ -139,13 +139,12 @@ public abstract class Projection {
 		if (getResizeGui() && renderPass == 0) {
 			MinecraftClient mc = MinecraftClient.getInstance();
 			Window window = mc.getWindow();
-			RenderSystem.matrixMode(5889);
-			RenderSystem.loadIdentity();
-			RenderSystem.ortho(0.0D, (double)window.getFramebufferWidth() / window.getScaleFactor(), (double)window.getFramebufferHeight() / window.getScaleFactor(), 0.0D, 1000.0D, 3000.0D);
-			RenderSystem.matrixMode(5888);
-			RenderSystem.loadIdentity();
-			RenderSystem.translatef(0.0F, 0.0F, -2000.0F);
-			RenderSystem.defaultAlphaFunc();
+			GL11.glMatrixMode(5889);
+			GL11.glLoadIdentity();
+			GL11.glOrtho(0.0D, (double)window.getFramebufferWidth() / window.getScaleFactor(), (double)window.getFramebufferHeight() / window.getScaleFactor(), 0.0D, 1000.0D, 3000.0D);
+			GL11.glMatrixMode(5888);
+			GL11.glLoadIdentity();
+			GL11.glTranslatef(0.0F, 0.0F, -2000.0F);
 			RenderSystem.clear(256, MinecraftClient.IS_SYSTEM_MAC);
 			MatrixStack matrixStack = new MatrixStack();
 			mc.inGameHud.render(matrixStack, tickDelta);
